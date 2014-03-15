@@ -1,0 +1,23 @@
+<html>
+<head>
+    <link rel="stylesheet" href="../../lib/streamhub-sdk/src/css/style.css" />
+</head>
+<body>
+    <div id="author-feed"></div>
+    <script src="../../lib/cajon/cajon.js"></script>
+    <script src="../../requirejs.conf.js"></script>
+    <script>
+    require.config({
+        baseUrl: '../../'
+    });
+    require([
+        'streamhub-author-content',
+        'streamhub-sdk/content/views/content-list-view'],
+    function (AuthorArchive, ContentListView) {
+        var leetContent = new AuthorArchive('1337@advancedigital-int-0.fyre.co');
+        var feed = new ContentListView({ el: document.getElementById('author-feed') });
+        leetContent.pipe(feed);
+    });
+    </script>
+</body>
+</html>

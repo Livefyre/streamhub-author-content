@@ -3,7 +3,7 @@
 var debug = require('streamhub-sdk/debug');
 var inherits = require('inherits');
 var Readable = require('stream/readable');
-var BootstrapClient = require('streamhub-sdk/collection/clients/bootstrap-client');
+var AuthorContentClient = require('streamhub-author-content/author-content-client');
 var StateToContent = require('streamhub-sdk/content/state-to-content');
 
 var log = debug('streamhub-sdk/streams/author-archive');
@@ -13,27 +13,33 @@ var AuthorArchive = function (authorId, opts) {
 
     this._authorId = authorId;
     this._network = authorId.split('@')[1];
-    this._bootstrapClient = opts.bootstrapClient || new BootstrapClient();
-
+    this._authorContentClient = opts.authorContentClient || new AuthorContentClient();
+    this._finished = false;
     Readable.call(this, opts);
 };
 inherits(AuthorArchive, Readable);
 
 AuthorArchive.prototype._read = function () {
-    var bootstrapClientOpts = {
+    if (this._finished) {
+        this.push(null);
+        return;
+    }
+
+    var authorContentClientOpts = {
         authorId: this._authorId,
         network: this._network
     };
 
-    this._bootstrapClient.getAuthorContent(bootstrapClientOpts, function (err, data) {
+    this._authorContentClient.getAuthorContent(authorContentClientOpts, function (err, data) {
         if (err || ! data) {
-            this.emit('error', new Error('Error requesting Bootstrap author data for user: '+bootstrapClientOpts.authorId));
+            this.emit('error', new Error('Error requesting Bootstrap author data for user: '+authorContentClientOpts.authorId));
             return;
         }
 
         var contents = this._contentsFromBootstrapDoc(data);
 
         this.push.apply(this, contents);
+        this._finished = true;
     }.bind(this));
 };
 
