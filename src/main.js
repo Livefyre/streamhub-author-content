@@ -14,7 +14,7 @@ var AuthorArchive = function (authorId, opts) {
     this._authorId = authorId;
     this._network = authorId.split('@')[1];
     this._authorContentClient = opts.authorContentClient || new AuthorContentClient();
-    this._finished = false;
+    this._hasMoreContent = true;
 
     this._offset = 0;
     this._pageIndex = 0;
@@ -25,7 +25,7 @@ var AuthorArchive = function (authorId, opts) {
 inherits(AuthorArchive, Readable);
 
 AuthorArchive.prototype._read = function () {
-    if (this._finished) {
+    if (! this._hasMoreContent) {
         this.push(null);
         return;
     }
@@ -47,9 +47,8 @@ AuthorArchive.prototype._read = function () {
 
         var contents = this._contentsFromBootstrapDoc(data);
         if (contents.length < this._limit) {
-            this._finished = true;
+            this._hasMoreContent = false;
             this.push.apply(this, contents);
-            this.push(null);
             return;
         }
 
