@@ -46,10 +46,6 @@ AuthorArchive.prototype._read = function () {
         this._offset += this._limit;
 
         var contents = this._contentsFromBootstrapDoc(data);
-        if (this._finished) {
-            this.push(null);
-            return;
-        }
         if (contents.length < this._limit) {
             this._finished = true;
             this.push.apply(this, contents);
