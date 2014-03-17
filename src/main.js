@@ -14,20 +14,27 @@ var AuthorArchive = function (authorId, opts) {
     this._authorId = authorId;
     this._network = authorId.split('@')[1];
     this._authorContentClient = opts.authorContentClient || new AuthorContentClient();
-    this._finished = false;
+    this._hasMoreContent = true;
+
+    this._offset = 0;
+    this._pageIndex = 0;
+    this._limit = opts.limit || 50;
+
     Readable.call(this, opts);
 };
 inherits(AuthorArchive, Readable);
 
 AuthorArchive.prototype._read = function () {
-    if (this._finished) {
+    if (! this._hasMoreContent) {
         this.push(null);
         return;
     }
 
     var authorContentClientOpts = {
         authorId: this._authorId,
-        network: this._network
+        network: this._network,
+        offset: this._pageIndex,
+        limit: this._limit
     };
 
     this._authorContentClient.getAuthorContent(authorContentClientOpts, function (err, data) {
@@ -35,11 +42,17 @@ AuthorArchive.prototype._read = function () {
             this.emit('error', new Error('Error requesting Bootstrap author data for user: '+authorContentClientOpts.authorId));
             return;
         }
+        this._pageIndex++;
+        this._offset += this._limit;
 
         var contents = this._contentsFromBootstrapDoc(data);
+        if (contents.length < this._limit) {
+            this._hasMoreContent = false;
+            this.push.apply(this, contents);
+            return;
+        }
 
         this.push.apply(this, contents);
-        this._finished = true;
     }.bind(this));
 };
 
