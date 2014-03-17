@@ -66,7 +66,8 @@ AuthorArchive.prototype._contentsFromBootstrapDoc = function (bootstrapDoc, opts
     var state;
 
     var stateToContent = this._createStateToContent({
-        authors: bootstrapDoc.data.authors
+        authors: bootstrapDoc.data.authors,
+        replies: true
     });
     stateToContent.on('data', function (content) {
         contents.push(content);
