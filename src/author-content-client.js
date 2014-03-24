@@ -37,5 +37,21 @@ function(LivefyreHttpClient, inherits) {
         }, callback);
     };
 
+    AuthorContentClient.prototype.getAuthorStats = function (opts, callback) {
+        opts = opts || {};
+        callback = callback || function() {};
+        var url = [
+            this._getUrlBase(opts),
+            "/api/v3.1",
+            "/author/",
+            opts.authorId,
+            "/stats/"
+        ].join("");
+
+        this._request({
+            url: url
+        }, callback);
+    };
+
     return AuthorContentClient;
 });
