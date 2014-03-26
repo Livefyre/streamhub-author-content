@@ -5,6 +5,7 @@ var inherits = require('inherits');
 var Readable = require('stream/readable');
 var AuthorContentClient = require('streamhub-author-content/author-content-client');
 var StateToContent = require('streamhub-sdk/content/state-to-content');
+var Collection = require('streamhub-sdk/collection');
 
 var log = debug('streamhub-sdk/streams/author-archive');
 
@@ -45,7 +46,7 @@ AuthorArchive.prototype._read = function () {
         this._pageIndex++;
         this._offset += this._limit;
 
-        var contents = this._contentsFromBootstrapDoc(data);
+        var contents = this._contentsFromBootstrapDoc(data.data);
         if (contents.length < this._limit) {
             this._hasMoreContent = false;
             this.push.apply(this, contents);
@@ -59,31 +60,36 @@ AuthorArchive.prototype._read = function () {
 AuthorArchive.prototype._contentsFromBootstrapDoc = function (bootstrapDoc, opts) {
     opts = opts || {};
     bootstrapDoc = bootstrapDoc || {};
-
+    var self = this;
     var contents = [];
     var content;
-    var states = bootstrapDoc.data.content || [];
+    var stateContents = bootstrapDoc.content || [];
     var state;
 
     var stateToContent = this._createStateToContent({
-        authors: bootstrapDoc.data.authors,
+        authors: bootstrapDoc.authors,
         replies: true
     });
-    stateToContent.on('data', function (content) {
-        contents.push(content);
+
+    contents = stateContents.map(function (stateContent) {
+        var state = {
+            content: stateContent,
+            // Since the state from the author content endpoint is missing
+            // the `type` and `source` properties set the appropriate defaults. 
+            type: stateContent.type || StateToContent.enums.type.indexOf('CONTENT'),
+            source: stateContent.source || StateToContent.enums.source.indexOf('livefyre')
+        };
+        var threadContents = stateToContent.transform(state, bootstrapDoc.authors, {
+            collection: new Collection({
+                network: self._network,
+                siteId: stateContent.collection.siteId,
+                articleId: stateContent.collection.articleId,
+                id: stateContent.collection.id
+            })
+        });
+        var content = threadContents[0];
+        return content;
     });
-
-    for (var i=0, statesCount=states.length; i < statesCount; i++) {
-        state = {};
-        state.content = states[i];
-
-        // Since the state from the author content endpoint is missing
-        // the `type` and `source` properties set the appropriate defaults. 
-        state.type = states[i].type || StateToContent.enums.type.indexOf('CONTENT');
-        state.source = states[i].source || StateToContent.enums.source.indexOf('livefyre');
-        content = stateToContent.write(state);
-    }
-    stateToContent.write(bootstrapDoc.data);
 
     log("created contents from bootstrapDoc", contents);
     return contents;
