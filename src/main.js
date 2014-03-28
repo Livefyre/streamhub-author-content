@@ -19,7 +19,7 @@ var AuthorArchive = function (authorId, opts) {
 
     this._offset = 0;
     this._pageIndex = 0;
-    this._limit = opts.limit || 50;
+    this._limit = opts.limit || 25;
 
     Readable.call(this, opts);
 };
@@ -62,29 +62,24 @@ AuthorArchive.prototype._contentsFromBootstrapDoc = function (bootstrapDoc, opts
     bootstrapDoc = bootstrapDoc || {};
     var self = this;
     var contents = [];
-    var content;
-    var stateContents = bootstrapDoc.content || [];
-    var state;
+    var states = bootstrapDoc.content || [];
 
     var stateToContent = this._createStateToContent({
         authors: bootstrapDoc.authors,
         replies: true
     });
 
-    contents = stateContents.map(function (stateContent) {
-        var state = {
-            content: stateContent,
-            // Since the state from the author content endpoint is missing
-            // the `type` and `source` properties set the appropriate defaults. 
-            type: stateContent.type || StateToContent.enums.type.indexOf('CONTENT'),
-            source: stateContent.source || StateToContent.enums.source.indexOf('livefyre')
-        };
+    contents = states.map(function (state) {
+        // Since the state from the author content endpoint is missing
+        // the `type` and `source` properties set the appropriate defaults. 
+        state.type = state.type || StateToContent.enums.type.indexOf('CONTENT');
+        state.source = state.source || StateToContent.enums.source.indexOf('livefyre');
         var threadContents = stateToContent.transform(state, bootstrapDoc.authors, {
             collection: new Collection({
                 network: self._network,
-                siteId: stateContent.collection.siteId,
-                articleId: stateContent.collection.articleId,
-                id: stateContent.collection.id
+                siteId: state.collection.siteId,
+                articleId: state.collection.articleId,
+                id: state.collection.id
             })
         });
         var content = threadContents[0];
