@@ -26,13 +26,16 @@ function(LivefyreHttpClient, inherits) {
             "/api/v3.1",
             "/author/",
             opts.authorId,
-            "/content/?",
-            opts.offset ? 'offset='+opts.offset : '',
-            "&",
-            opts.limit ? 'limit='+opts.limit : ''
+            "/content/"
         ].join("");
 
+        var params = {
+            limit: opts.limit,
+            until: opts.until
+        };
+
         this._request({
+            data: params,
             url: url
         }, callback);
     };

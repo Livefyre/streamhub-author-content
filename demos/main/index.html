@@ -14,9 +14,9 @@
         'streamhub-author-content',
         'streamhub-sdk/content/views/content-list-view'],
     function (AuthorArchive, ContentListView) {
-        var leetContent = new AuthorArchive('1337@advancedigital-int-0.fyre.co');
+        var leetContent = new AuthorArchive('7@advancedigital-int-0.fyre.co');
         var feed = new ContentListView({ el: document.getElementById('author-feed') });
-        leetContent.pipe(feed);
+        leetContent.pipe(feed.more);
     });
     </script>
 </body>
